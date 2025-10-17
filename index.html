@@ -74,7 +74,11 @@
           
           <button style="margin: 0 0px;" onclick="saveMachine()">Сохранить МТ</button>
 			<button style="margin: 0 0px 0 0px;" onclick="loadMachine()">Загрузить МТ</button>          
-               
+          
+          
+          
+
+          
           
           
         </div>
@@ -89,7 +93,12 @@
         <div style="margin-top: 20px;   margin-left: 30px;   display: flex;">
       
         </div>    
-
+  
+      
+        <div class="message-console">
+            <div id="consoleOutput"></div>
+        </div>
+      
 		<div class="author-footer">
 		    © gevaraweb, Осипов Е.А., 2025.
 		</div>
@@ -499,7 +508,7 @@
 					});
 				}
 			});
-			console.log('Transitions updated:', transitions);
+			// console.log('Transitions updated:', transitions);
 		}
 		
 		// Функция для обновления таблицы правил на основе массива transitions
@@ -617,6 +626,35 @@
           });
       }
 
+    (function() {
+        const consoleOutput = document.getElementById('consoleOutput');
+
+        function addMessage(text, type = 'log') {
+            const line = document.createElement('div');
+            line.textContent = text;
+            line.className = type; // 'log' или 'alert'
+            consoleOutput.appendChild(line);
+            // Прокручиваем к последнему сообщению
+            const container = document.querySelector('.message-console');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Перехват console.log
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+            addMessage(message, 'log');
+        }
+
+        // Перехват alert
+        window.alert = function(msg) {
+            addMessage('ALERT: ' + msg, 'alert');
+        }
+    })();
+
+console.log("Консоль вывода...");
+      
       
     </script>
 </body>
