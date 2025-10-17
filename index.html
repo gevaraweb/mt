@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5">
+    <title>Машина Тьюринга</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="machine" style="position: relative;"> <!--Объявили основной блочный элемент Машины Тьюринга-->
+        <div class="alphabet-input-container"> <!--Объявили элемент алфавита-->
+            <label for="alphabet">Алфавит (через запятую):</label>
+            <input type="text" id="alphabet" name="alphabet" value="_,0,1">
+            <button onclick="updateAlphabet()">Обновить алфавит</button>
+        </div>
+
+        <div class="tape-container"> <!--Объявили элемент ленты Машины Тьюринга-->
+            <div class="tape" id="tape"></div>
+            <div class="head" id="head">▼</div> 
+        </div>
+
+        <div class="controls"> <!--Объявили элемент с кнопками управления машиной-->
+            <div class="controls-buttons">
+                <button onclick="moveLeft()">◄</button>
+                <button onclick="moveRight()">►</button>
+                <!--<button onclick="step()">Шаг</button>
+                <button onclick="run()">Запустить</button>-->
+				
+				<button onclick="setTimeout(step, delay/2)">Шаг</button>
+				<button onclick="setTimeout(run, delay/2)">Запустить</button>				
+				
+                <button onclick="stopExecution()">Стоп</button>
+                <button onclick="reset()">Сброс</button>
+            </div>
+
+            <div class="controls-state"> <!--Объявили основной блок элементов состояния машины-->
+                <div class="state"> 
+                    Начальное состояние: <span id="first_state">Q0</span>
+        			<!-- <input type="text" id="first_state_input" value="q0"> -->
+                </div>
+                <div class="state">
+                    <div class="state-container"> 
+                        <label for="haltState">Конечное состояние:</label>
+                        <input type="text" id="haltState" class="haltState" value="конец">
+                    </div>
+                </div>
+                <div class="state"> 
+                    Текущее состояние: <span id="state">Q0</span>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="rules-container"> <!--Объявили элемент, содержащий таблицу правил переходов Машины Тьюринга, а так же возможность сохранять правила переходов и параметры машины в виде URL адреса-->
+            <h3>Правила переходов</h3>
+            <table id="rules-table">
+                <thead>
+                <tr>
+                    <th>Состояние</th>
+                    <th>Символ</th>
+                    <th>Новое состояние</th>
+                    <th>Новый символ</th>
+                    <th>Движение</th>
+                    <th>Действие</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+            <button onclick="addRule()">Добавить правило</button>
+            <!-- <button onclick="updateTransitions()">Обновить переходы</button>-->
+            <button onclick="generateAndShowLink()">Сохранить как ссылку</button>
+          
+          <button style="margin: 0 0px;" onclick="saveMachine()">Сохранить МТ</button>
+			<button style="margin: 0 0px 0 0px;" onclick="loadMachine()">Загрузить МТ</button>          
+               
+          
+          
+        </div>
+          <div id="linkContainer" style="margin-top: 20px; display: none;">
+              <p>Ссылка для сохранения состояния:</p>
+              <textarea id="linkText" rows="4" cols="80" readonly></textarea>
+              <br>
+              <button onclick="copyLink()">📋 Копировать ссылку</button>
+          </div>
+
+      
+        <div style="margin-top: 20px;   margin-left: 30px;   display: flex;">
+      
+        </div>    
+  
+      
+    </div>
+  
+  
+  
+
+  
+  
+
+    <script> //Основной блок работы JavaScript функций
+		const alphabetInput = document.getElementById('alphabet'); // Получаем поле ввода алфавита
+		const tapeContainer = document.querySelector('.tape-container'); // Получаем контейнер ленты  
+		const tapeElement = document.getElementById('tape'); // Получаем элемент ленты
+		const head = document.getElementById('head'); // Получаем элемент головки
+		const haltStateInput = document.getElementById('haltState'); // Получаем поле ввода конечного состояния
+		const stateSpan = document.getElementById('state'); // Получаем элемент для отображения текущего состояния
+		const first_state_Span = document.getElementById('first_state'); // Получаем элемент для отображения начального состояния		
+		const rulesTable = document.getElementById('rules-table'); // Получаем таблицу правил
+		var errorTransition = false;
+		var delay = 750; // Задержка между шагами в миллисекундах
+			
+		let alphabet = ['0', '1'];  
+		let tape = [];      
+		let headPosition = 0;
+		let currentState = 'q0';
+		let haltState = 'конец';
+		let transitions = [];
+		let isRunning = false; 
+		
+		// Функция для получения параметров из URL
+		function getUrlParams() {
+			const urlParams = new URLSearchParams(window.location.search);
+			const params = {};
+			for (const [key, value] of (urlParams)) {
+				params[key] = value;
+			}
+			return params;
+		}
+		
+
+      // Получаем параметры из URL
+        const urlParams = getUrlParams();
+
+        // Алфавит
+        if (urlParams.alphabet) {
+            alphabet = urlParams.alphabet.split('');
+            alphabetInput.value = alphabet.join(',');
+        }
+
+        // Позиция головки
+        if (urlParams.headPosition) {
+            headPosition = parseInt(urlParams.headPosition);
+        }
+
+        // Начальное состояние всегда q0
+        let firstState = 'q0';
+        currentState = firstState;
+        updateState(currentState);
+        first_state_Span.textContent = firstState;
+
+        // Конечное состояние
+        if (urlParams.haltState) {
+            haltState = urlParams.haltState;
+            haltStateInput.value = haltState;
+        } else {
+            haltState = haltStateInput.value;
+        }
+
+        // Лента
+        if (urlParams.tape) {
+            tape = urlParams.tape.split('');
+        }
+
+        // Обновляем алфавит
+        updateAlphabet();
+
+		
+		if (urlParams.tape) {
+			tape = urlParams.tape.split('');
+			while(tapeElement.children.length < tape.length){
+				const item = document.createElement('div');
+				item.classList.add('item');
+				const select = createSelectElement(alphabet[0]);
+				item.appendChild(select);
+				tapeElement.appendChild(item);
+			}
+		
+			for (let i = 0; i < tape.length; i++) {
+				updateTapeCell(i, tape[i]);
+			}
+		
+		} else {
+			initializeTape();
+		}
+		
+		updateHeadPosition();
+		
+		if (urlParams.state) {
+			transitions = parseTransitions(decodeURIComponent(urlParams.state));
+			updateRulesTable(transitions);
+		} else {
+			transitions = [
+				{ state: 'q0', symbol: '0', newState: 'q1', newSymbol: '1', direction: 'R' },
+				{ state: 'q0', symbol: '1', newState: 'q0', newSymbol: '1', direction: 'R' },
+				{ state: 'q1', symbol: '1', newState: 'q1', newSymbol: '0', direction: 'L' },
+				{ state: 'q1', symbol: '0', newState: 'q1', newSymbol: '0', direction: 'N' }
+			];
+			updateRulesTable(transitions);
+		}
+		
+		// Функция обновления алфавита
+		function updateAlphabet() {
+			alphabet = alphabetInput.value.split(',').map(item => item.trim());
+			initializeTape();
+			const rows = rulesTable.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const symbolSelect = row.querySelector('.symbol-select');
+				const newSymbolSelect = row.querySelector('.new-symbol-select');
+				updateSymbolSelect(symbolSelect);
+				updateSymbolSelect(newSymbolSelect);
+			});
+		}
+		
+		// Функция создания элемента select для ячейки ленты
+		function createSelectElement(selectedValue) {
+			const select = document.createElement('select');
+			select.classList.add('cell-select');
+			alphabet.forEach(symbol => {
+				const option = document.createElement('option');
+				option.value = symbol;
+				option.textContent = symbol;
+				select.appendChild(option);
+			});
+			select.value = selectedValue || alphabet[0];
+			select.addEventListener('change', (event) => {
+				tape[Array.from(tapeElement.children).indexOf(event.target.parentNode)] = event.target.value;
+			});
+			return select;
+		}
+		
+		// Функция инициализации ленты
+		function initializeTape() {
+			tapeElement.innerHTML = '';
+			tape = [];
+			for (let i = 1; i < 20; i++) {
+				const item = document.createElement('div');
+				item.classList.add('item');
+				const select = createSelectElement(alphabet[0]);
+				item.appendChild(select);
+				tapeElement.appendChild(item);
+				tape.push(alphabet[0]);
+			}
+			updateHeadPosition();
+		}
+		
+		// Функция обновления ячейки ленты
+		function updateTapeCell(index, value) {
+			const tapeCells= tapeElement.querySelectorAll('.item'); // Ищем элементы внутри tapeElement
+			if (tapeCells[index]) {
+				const selectElement = tapeCells[index].querySelector('.cell-select');
+				if (selectElement) {
+					selectElement.value = value;
+					tape[index] = value; // Обновляем значение в массиве tape
+					console.log(`Ячейка ${index+1} обновлена значением ${value}`);
+				} else {
+					console.warn(`Select element не найден в ячейке ${index+1}`);
+				}
+			} else {
+				console.warn(`Ячейка ${index+1} не найдена`);
+			}
+		}
+		
+		// Функция для обеспечения достаточной длины ленты
+		function ensureTapeLength() {
+			if (headPosition >= tape.length) {
+				const item = document.createElement('div');
+				item.classList.add('item');
+				const select = createSelectElement();
+				item.appendChild(select);
+				tapeElement.appendChild(item);
+				tape.push(select.value);
+			}
+		}
+		
+		// Функция для обновления состояния
+		function updateState(newState) {
+			currentState= newState;
+			stateSpan.textContent = newState;
+		}
+		
+		// Функция для перемещения головки ленты влево
+		function moveLeft() {
+			if (headPosition > 0) {headPosition--;
+				updateHeadPosition();
+			}
+		}
+		
+		// Функция для перемещения головки ленты вправо
+		function moveRight() {
+			headPosition++;
+			ensureTapeLength();
+			updateHeadPosition();
+		}
+		
+		// Функция для обновления позиции головки относительно ленты
+		function updateHeadPosition() {
+			let cellWidth = 40; // Статичная ширина ячейки ленты, соответствует размеру в CSS
+			if (window.innerWidth <= 600) {
+				cellWidth = 30;
+			}
+			const headLeft = headPosition * cellWidth+8.5; // Вычисляем положение головки относительно ленты
+			head.style.left = `${headLeft}px`;
+			scrollToVisible(); // Вызываем функцию прокрутки после обновления позиции головки
+		
+		}
+		
+		// Функция для автоматического скролла ленты, в случае если головка находится за пределами видимой части ленты
+		function scrollToVisible() {
+			const cellWidth = 40;
+			const containerWidth = tapeContainer.offsetWidth;
+			const scrollLeft = tapeContainer.scrollLeft;
+			const headLeft = (headPosition* cellWidth); // Положение головки относительно ленты
+			const visibleRight = scrollLeft + containerWidth; // Рассчитываем правую границу видимой области ленты
+			if (headLeft + cellWidth > visibleRight) {
+				tapeContainer.scrollTo({
+					left: headLeft - containerWidth + (1.5 * cellWidth),
+					behavior: 'smooth'
+				}); // Если головка выходит за правую границу ленты, прокручиваем ленту
+			}
+			else if (headLeft < scrollLeft) {
+				tapeContainer.scrollTo({
+					left: headLeft,
+					behavior: 'smooth'
+				}); // Если головка уходит за левую границу тоже прокручиваем
+			}
+		}
+		
+		// Функция выполнения одного шага машины Тьюринга
+		function step() {
+			updateTransitions();
+			const currentSymbol = tape[headPosition];
+			const transition = transitions.find(t => t.state === currentState && t.symbol === currentSymbol);
+			if (transition) {
+				const { newState, newSymbol, direction } = transition;
+				tape[headPosition] = newSymbol;
+				updateState(newState);
+				updateTapeCell(headPosition, newSymbol);
+				if (direction === 'R') {
+					moveRight();
+				} else if (direction === 'L') {
+					moveLeft();
+				} else if (direction === 'N') {
+				}
+			} else {
+				errorTransition = true;
+				console.log(`Переход при состоянии '${currentState}' и символе '${currentSymbol}' не найден — машина остановлена.`);
+				isRunning = false;
+			}
+		}
+		
+		// Функция запуска выполнения машины Тьюринга
+		function run() {
+		updateTransitions();
+			if (isRunning) return; // Если уже запущено, ничего не делаем
+			isRunning = true;
+			haltState = haltStateInput.value;
+			let steps = 0;
+			const maxSteps = 1000;
+			function executeStep() {
+				if (isRunning && currentState !== haltState && headPosition < tape.length && steps < maxSteps) {
+				    if (errorTransition) {
+						console.log(`Машина временно остановлена. Обновите переходы`);
+						return;
+					}
+					step();		console.log("вызов Step");
+					steps++;
+		
+					if (currentState !== haltState) {
+						setTimeout(executeStep, delay); // Рекурсивный вызов с задержкой
+					} else {
+						console.log("Машина Тьюринга завершила работу.");
+						isRunning = false; // Останавливаем выполнение, если достигнуто конечное состояние
+					}
+				} else {
+					isRunning = false; // Останавливаем выполнение, если достигнуты условия остановки
+					if (steps === maxSteps) {
+						console.warn("Машина Тьюринга остановлена из-за превышения максимального количества шагов.");
+					}
+				}
+			}
+		
+			executeStep(); // Начало выполнения
+		}
+		
+		// Функция остановки выполнения машины Тьюринга
+		function stopExecution() {
+			isRunning = false;
+			console.log("Выполнение остановлено пользователем.");
+		}
+		
+		// Функция сброса состояния машины Тьюринга
+		function reset() {
+			headPosition = 0;
+			currentState = 'q0';
+			updateState(currentState);
+			updateHeadPosition();
+			initializeTape();
+		}
+		
+		// Функция обновления выпадающего списка символов
+		function updateSymbolSelect(select, selectedValue) {
+			select.innerHTML = '';
+			alphabet.forEach(symbol => {
+				const option = document.createElement('option');
+				option.value = symbol;
+				option.textContent = symbol;
+				select.appendChild(option);
+			});
+		
+			if (selectedValue && alphabet.includes(selectedValue)) {
+				select.value = selectedValue;
+			} else {
+				select.value = alphabet[0];
+			}
+		}
+		
+		// Функция для добавления правила
+		function addRule() {
+			const tbody = rulesTable.querySelector('tbody');
+			const newRow = tbody.insertRow();
+			newRow.innerHTML = `
+				<td><input type="text"></td>
+				<td><select class="symbol-select"></select></td>
+				<td><input type="text"></td>
+				<td><select class="new-symbol-select"></select></td>
+				<td>
+					<select>
+						<option value="R">R</option>
+						<option value="L">L</option>
+						<option value="N">N</option>
+					</select>
+				</td>
+				<td><button onclick="deleteRule(this)">Удалить</button></td>
+			`;
+			const symbolSelect = newRow.querySelector('.symbol-select');
+			const newSymbolSelect = newRow.querySelector('.new-symbol-select');
+			updateSymbolSelect(symbolSelect);
+			updateSymbolSelect(newSymbolSelect); // используем ту же функцию
+		}
+		
+		// Функция для удаления правила
+		function deleteRule(button) {
+			const row = button.parentNode.parentNode;
+			rulesTable.deleteRow(row.rowIndex);
+			updateTransitions()
+		}
+		
+		// Функция для парсинга строки правил в массив объектов transitions
+		function parseTransitions(rulesString) {
+			const transitions = [];
+			if (!rulesString) return transitions;
+			const ruleSets = rulesString.split('->');
+		
+			ruleSets.forEach(ruleSet => {
+				if (!ruleSet) return; // Пропускаем пустые строки
+				const parts = ruleSet.split('|');
+				if (parts.length !== 5) {
+					console.warn("Неверный формат правила:", ruleSet);
+					return;
+				}
+				const [state, symbol, newState, newSymbol, direction] = parts;
+				transitions.push({
+					state: state,
+					symbol: symbol,
+					newState: newState,
+					newSymbol: newSymbol,
+					direction: direction
+				});
+			});
+		
+			return transitions;
+		}
+		
+		// Функция для обновления переходов(из таблицы в массив transitions)
+		function updateTransitions() {
+			errorTransition = false;
+			transitions = [];
+			const rows = rulesTable.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				const cells = row.querySelectorAll('td');
+				if (cells.length > 0) {
+					const state = cells[0].querySelector('input').value;
+					const symbol = cells[1].querySelector('select').value;
+					const newState = cells[2].querySelector('input').value;
+					const newSymbol = cells[3].querySelector('select').value;
+					const direction = cells[4].querySelector('select').value;
+					
+					transitions.push({
+						state: state,
+						symbol: symbol,
+						newState: newState,
+						newSymbol: newSymbol,
+						direction: direction
+					});
+				}
+			});
+			console.log('Transitions updated:', transitions);
+		}
+		
+		// Функция для обновления таблицы правил на основе массива transitions
+		function updateRulesTable(transitions) {
+			// Очищаем существующие строки (кроме заголовка)
+			const tbody = rulesTable.querySelector('tbody');
+			tbody.innerHTML = '';
+			transitions.forEach(transition => {
+				const newRow = tbody.insertRow();
+				newRow.innerHTML = `
+					<td><input type="text" value="${transition.state}"></td>
+					<td><select class="symbol-select"></select></td>
+					<td><input type="text" value="${transition.newState}"></td>
+					<td><select class="new-symbol-select"></select></td>
+					<td>
+						<select>
+							<option value="R" ${transition.direction === 'R' ? 'selected' : ''}>R</option>
+							<option value="L" ${transition.direction === 'L' ? 'selected' : ''}>L</option>
+							<option value="N" ${transition.direction === 'N' ? 'selected' : ''}>N</option>
+			</select>
+					</td>
+					<td><button onclick="deleteRule(this)">Удалить</button></td>
+				`;
+				const symbolSelect = newRow.querySelector('.symbol-select');
+				const newSymbolSelect = newRow.querySelector('.new-symbol-select');
+				updateSymbolSelect(symbolSelect, transition.symbol);
+				updateSymbolSelect(newSymbolSelect, transition.newSymbol); // используем ту же функцию
+		
+			});
+		}
+		
+        // Функция генерации и отображения ссылки на текущее состояние
+        function generateAndShowLink() {
+            updateTransitions(); // Обновляем таблицу переходов перед сохранением
+
+            const baseUrl = window.location.origin + window.location.pathname;
+            const alphabetParam = alphabet.join('');
+            const headPositionParam = headPosition;
+            const firstStateParam = 'q0'; // <-- фиксированное начальное состояние
+            const haltStateParam = haltStateInput.value;
+            const tapeParam = tape.join('');
+
+            const rulesString = transitions
+                .map(t => `${t.state}|${t.symbol}|${t.newState}|${t.newSymbol}|${t.direction}`)
+                .join('->');
+
+            // сохраняем firstState, currentState не включаем
+            const url = `${baseUrl}?alphabet=${alphabetParam}&headPosition=${headPositionParam}&firstState=${firstStateParam}&haltState=${haltStateParam}&tape=${tapeParam}&state=${rulesString}`;
+
+            const linkTextarea = document.getElementById('linkText');
+            linkTextarea.value = url;
+            document.getElementById('linkContainer').style.display = 'block';
+        }
+
+
+      function saveMachine() {
+          updateTransitions();
+
+          // Собираем текущую ленту из DOM
+          const tapeCells = tapeElement.querySelectorAll('.item .cell-select');
+          const fullTape = Array.from(tapeCells).map(cell => cell.value);
+
+          const data = {
+              alphabet,
+              tape: fullTape,   // сохраняем всю ленту, включая пустые ячейки
+              headPosition,
+              currentState,
+              haltState: haltStateInput.value,
+              transitions
+          };
+          localStorage.setItem("savedMT", JSON.stringify(data));
+          alert("✅ Машина сохранена в localStorage.");
+      }
+
+
+      function loadMachine() {
+          const json = localStorage.getItem("savedMT");
+          if (!json) {
+              alert("⚠️ Нет сохранённой машины в localStorage.");
+              return;
+          }
+
+          const data = JSON.parse(json);
+          alphabet = data.alphabet;
+          tape = data.tape;
+          headPosition = data.headPosition;
+          currentState = data.currentState;
+          haltState = data.haltState;
+          transitions = data.transitions;
+
+          alphabetInput.value = alphabet.join(',');
+          haltStateInput.value = haltState;
+          updateRulesTable(transitions);
+
+          tapeElement.innerHTML = '';
+          for (let i = 0; i < tape.length; i++) {
+              const item = document.createElement('div');
+              item.classList.add('item');
+              const select = createSelectElement(tape[i]);
+              item.appendChild(select);
+              tapeElement.appendChild(item);
+          }
+
+          updateHeadPosition();
+          updateState(currentState);
+          alert("✅ Машина загружена из localStorage.");
+      }
+
+      function copyLink() {
+          const link = document.getElementById('linkText').value;
+          navigator.clipboard.writeText(link).then(() => {
+              alert('✅ Ссылка скопирована в буфер обмена!');
+          }).catch(() => {
+              alert('⚠️ Не удалось скопировать ссылку.');
+          });
+      }
+
+      
+    </script>
+</body>
+</html>

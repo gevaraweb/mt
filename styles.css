@@ -1,0 +1,246 @@
+@media (max-width: 600px) {
+  .machine {
+    width: 100vw;
+    max-width: 100vw;
+    padding: 10px;
+  }
+  .item {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .alphabet-input-container label,
+  .state,
+  .state label {
+    font-size: 18px;
+  }
+  .controls button {
+    font-size: 18px;
+    padding: 4px 6px;
+  }
+  #rules-table input[type="text"], #rules-table select {
+    width: 40px;
+    padding: 3px;
+    font-size: 12px;
+  }
+  .head {
+    font-size: 18px;
+    top: 6px;
+  }
+}
+
+
+
+/* styles.css */
+body {
+       font-family: sans-serif;
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       min-height: 100vh; /* Изменено: используем vh */
+       margin: 0;
+       background-color: #f0f0f0;
+   }
+
+   .machine {
+       width: 800px;
+       max-width: 95vw;
+       display: flex;
+       flex-direction: column;
+
+       position: relative;
+       background-color: #e0e0e0;
+       border: 1px solid #ccc;
+       padding: 20px;
+       border-radius: 5px;
+       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+       overflow: hidden;
+       margin: auto; /* Добавлено: центрируем по вертикали и горизонтали */
+   }
+
+.alphabet-input-container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    width: fit-content;
+    /*align-items: flex-start;*/ /*  Удалено */
+    margin: 0 auto; /*  Добавлено: центрируем контейнер */
+}
+
+.alphabet-input-container label {
+    margin-bottom: 2px;
+    font-size: 24px;
+}
+
+.alphabet-input-container input {
+    /* width: 100%;  Удалено: не растягиваем поле ввода */
+    box-sizing: border-box;
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+.alphabet-input-container button {
+    /* width: 100%;  Удалено: не растягиваем кнопку */
+    box-sizing: border-box;
+}
+
+
+.tape-container {
+    display: flex;
+    overflow-x: auto;
+    background-color: #e0e0e0;
+    white-space: nowrap;
+    position: relative;
+    width: 100%;
+    /* Убедитесь, что tape-container занимает всю ширину machine */
+    margin-bottom: 20px;
+    z-index: 1;
+    padding-top: 34px;
+    box-sizing: border-box;
+}
+
+.tape {
+    display: flex;
+    /* Важно: width auto, но flex-shrink: 0 */
+    width: auto;
+    flex-shrink: 0;
+    /* Предотвращаем сжатие ленты */
+}
+
+.item {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    text-align: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-radius: 3px;
+}
+
+.cell-select {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    border: none;
+    outline: 1px solid #000;
+    font-size: 20px;
+    background-color: #ddd;
+    border-radius: 3px;
+}
+
+.controls {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row; /* Изменено: Располагаем все в строку */
+    align-items: center;    /* Выравниваем элементы по вертикали */
+    justify-content: flex-start; /*  Включаем элементы влево */
+}
+
+.controls-buttons {
+    display: flex;
+    flex-direction: row;
+    padding-left: 10px;   /* Добавлено - отступ слева от кнопок */
+}
+
+.controls-states {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 10px;        /*  Добавлен padding (как у кнопок) */
+    border: 1px solid #ccc;   /* Добавлена рамка (как у .machine) */
+    border-radius: 5px;      /*  Добавлен радиус (как у кнопок) */
+}
+
+.state {
+    font-size: 18px;
+    margin-left: 10px;    /* Увеличил отступ между состоянием и кнопками */
+}
+
+.state-container {
+    display: flex;
+    flex-direction: row;  /* Лейбл и поле ввода в одну строку */
+    align-items: center;
+}
+
+.state label {
+    margin-bottom: 0;      /* Убрал отступ снизу */
+    margin-right: 5px;     /*  Добавил отступ справа  */
+}
+
+.state input {
+    width: 50px;
+    box-sizing: border-box;
+}
+
+.controls button {
+    font-size: 24px;
+    margin: 0 5px;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+
+
+.rules-container {
+    margin-top: 20px;
+    width: fit-content; /* Изменено: контейнер занимает только необходимую ширину */
+    margin-left: auto; /* Добавлено: автоматический левый отступ */
+    margin-right: auto; /* Добавлено: автоматический правый отступ */
+}
+
+#rules-table {
+    width: 100%;
+    border-spacing: 0;
+    margin-bottom: 10px;
+    border: 2px solid #000;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#rules-table th,
+#rules-table td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: center;
+}
+
+/* Добавляем вертикальные линии только между столбцами */
+#rules-table td + td,
+#rules-table th + th {
+    border-left: 1px solid #000;
+}
+
+#rules-table th {
+    background-color: #f2f2f2;
+}
+
+#rules-table input[type="text"] {
+    width: 80px;
+    padding: 5px;
+    box-sizing: border-box;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #000;
+}
+
+#rules-table select {
+    width: 50px;
+    padding: 5px;
+    box-sizing: border-box;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #000;
+}
+
+.head {
+    font-size: 24px;
+    color: red;
+    position: absolute;
+    top: 10px;
+    z-index: 2;
+}
