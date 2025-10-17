@@ -1,3 +1,14 @@
+.author-footer {
+    margin-top: 20px;
+    padding: 10px;
+    text-align: center;
+    background-color: #d3d3d3; /* светло-серый фон */
+    border-top: 1px solid #aaa; /* тонкая линия сверху */
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 0 0 5px 5px; /* закругление только снизу */
+}
+
 @media (max-width: 600px) {
   .machine {
     width: 100vw;
