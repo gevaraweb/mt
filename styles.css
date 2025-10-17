@@ -1,3 +1,27 @@
+.message-console {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+    height: 100px; /* высота панели сообщений */
+    overflow-y: auto; /* вертикальная прокрутка */
+    background-color: #000;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    padding: 5px;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.message-console .log {
+    color: white;
+}
+
+.message-console .alert {
+    color: red;
+    font-weight: bold;
+}
+
+
 .author-footer {
     margin-top: 20px;
     padding: 10px;
@@ -8,6 +32,8 @@
     font-weight: bold;
     border-radius: 0 0 5px 5px; /* закругление только снизу */
 }
+
+
 
 @media (max-width: 600px) {
   .machine {
